@@ -1,0 +1,6 @@
+anim/*
+meshes/*
+results/*
+build/CMakeFiles/*
+.vscode/*
+.idea/*
