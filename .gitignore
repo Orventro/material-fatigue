@@ -4,3 +4,11 @@ results/*
 build/CMakeFiles/*
 .vscode/*
 .idea/*
+sims/*
+build/plate_load
+build/plate_load_cuda
+build/plate_load
+build/*.txt
+build/cmake_install.cmake
+Readme.html
+Readme.pdf

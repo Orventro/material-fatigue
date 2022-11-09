@@ -63,10 +63,10 @@ int main(int argc, char* argv[]) {
     // ConstantCoefficient lambdaCoef(7.7e10);
     // ConstantCoefficient muCoef(4.4e10);
 
-    Vector lambda({7.7e8, 7.7e10});
+    Vector lambda({7.7e10, 7.7e8});
     PWConstCoefficient lambdaCoef(lambda);
 
-    Vector mu({4.4e8, 4.4e10});
+    Vector mu({4.4e10, 4.4e8});
     PWConstCoefficient muCoef(mu);
 
     // Defining operator for spatial discretization and ODE solver for time discretization
