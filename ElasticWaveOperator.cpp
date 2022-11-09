@@ -40,12 +40,14 @@ ElasticWaveOperator2D::ElasticWaveOperator2D(mfem::FiniteElementSpace &fspace, m
     M.AddDomainIntegrator(new mfem::VectorMassIntegrator(rhoCoef, &i_rule));
     M.Assemble();
     M.Finalize();
-    auto Mmat = new mfem::SparseMatrix;
-    Mmat->UseGPUSparse(true);
-    M.FormSystemMatrix(listOfEssentialDOFs, *Mmat);
+    // auto Mmat = new mfem::SparseMatrix;
+    mfem::SparseMatrix Mmat;
+    Mmat.UseGPUSparse(true);
+    M.FormSystemMatrix(listOfEssentialDOFs, Mmat);
     mfem::Vector diagonal(fespace.GetTrueVSize());
-    Mmat->GetDiag(diagonal);
-    delete Mmat; // freeing memory, for some reason Destroy() method is protected
+    Mmat.GetDiag(diagonal);
+    Mmat.~SparseMatrix();
+    // delete Mmat; // freeing memory, for some reason Destroy() method is protected
     for (int i = 0; i < diagonal.Size(); i++) {
         if (diagonal(i) < 1e-12)
             std::cout << "Zero encountered" << std::endl;
