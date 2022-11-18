@@ -40,9 +40,8 @@ ElasticWaveOperator2D::ElasticWaveOperator2D(mfem::FiniteElementSpace &fspace, m
     M.AddDomainIntegrator(new mfem::VectorMassIntegrator(rhoCoef, &i_rule));
     M.Assemble();
     M.Finalize();
-    // auto Mmat = new mfem::SparseMatrix;
+    
     mfem::SparseMatrix Mmat;
-    Mmat.UseGPUSparse(true);
     M.FormSystemMatrix(listOfEssentialDOFs, Mmat);
     mfem::Vector diagonal(fespace.GetTrueVSize());
     Mmat.GetDiag(diagonal);
@@ -56,7 +55,6 @@ ElasticWaveOperator2D::ElasticWaveOperator2D(mfem::FiniteElementSpace &fspace, m
     }
     
     MMatInv = new mfem::SparseMatrix(diagonal);
-    MMatInv->UseGPUSparse(true);
     MMatInv->Finalize();
     diagonal.Destroy(); // freeing memory
 

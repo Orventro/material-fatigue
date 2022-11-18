@@ -5,11 +5,9 @@
 #include <filesystem>
 #include <string>
 #include "ElasticWaveOperator.hpp"
-// #include "FatigueCalculator.hpp"
 #include "SigmaCoefficient.hpp"
 
 using namespace mfem;
-
 
 void displacementOnBoundary(const Vector& x, double time, Vector& d) {
     const double freq = 3e6;
@@ -59,22 +57,23 @@ int main(int argc, char* argv[]) {
 
     // Defining material parameters
     ConstantCoefficient rhoCoef(4500.0);
-
-    // ConstantCoefficient lambdaCoef(7.7e10);
-    // ConstantCoefficient muCoef(4.4e10);
-
-    Vector lambda({7.7e10, 7.7e8});
+    Vector lambda(2);
+    lambda(0) = 7.7e10;
+    lambda(1) = 7.7e8;
     PWConstCoefficient lambdaCoef(lambda);
-
-    Vector mu({4.4e10, 4.4e8});
+    Vector mu(2);
+    mu(0) = 4.4e10;
+    mu(1) = 4.4e8;
     PWConstCoefficient muCoef(mu);
+
+    std::cout << "Preparation took " << timer.RealTime() << " seconds.\nStarting forward simulation.\n";
 
     // Defining operator for spatial discretization and ODE solver for time discretization
     ElasticWaveOperator2D oper(fespace, rhoCoef, lambdaCoef, muCoef);
     printf("Operator done!\n");
     oper.SetTime(calculationTime);
-    auto ode_solver = new CentralDifferenceSolver();
-    ode_solver->Init(oper);
+    mfem::CentralDifferenceSolver ode_solver;
+    ode_solver.Init(oper);
 
     // Initializing (to zeros) displacement u and velocity du
     Vector u(fespace.GetVSize()), du(fespace.GetVSize());
@@ -87,24 +86,23 @@ int main(int argc, char* argv[]) {
     VectorFunctionCoefficient displacementCoeff(2, displacementOnBoundary);
     displacementCoeff.SetTime(calculationTime);
 
-    std::cout << "Preparation took " << timer.RealTime() << " seconds.\nStarting forward simulation.\n";
+    
     
     Array<int> boundaryAttribute(mesh.bdr_attributes.Size());
     boundaryAttribute = 0;
     boundaryAttribute[0] = 1; // top boundary
 
     SigmaCoefficient sigmaCoef(displacement, lambdaCoef, muCoef);
-    GridFunction sigmaGF(&scalarFESpace);
-    
-    // time loop
-    // Saving results
+    GridFunction sigmaGF(&fespace);
+
+
     std::filesystem::create_directory(argv[2]);
     const uint saveStep = 100;
     const uint fatigueStep = 10;
     const int REF = 4;
-    for (int i = 0; i < NumberOfTimeSteps; i++) {
+    for (uint i = 0; i < NumberOfTimeSteps; i++) {
         // Setting correct values on boundary
-        ode_solver->Step(u, du, calculationTime, dt);
+        ode_solver.Step(u, du, calculationTime, dt);
 
         du *= 1-2e-4; // only for conevrging simualtions
 
@@ -119,15 +117,12 @@ int main(int argc, char* argv[]) {
 
             std::ofstream vtkFile(filename);
             mesh.PrintVTK(vtkFile, REF);
+            std::cout << "Mesh saved.\n";
             sigmaCoef.setComponent(0);
             sigmaGF.ProjectCoefficient(sigmaCoef);
-            sigmaGF.SaveVTK(vtkFile, "sigma_xx", REF);
-            sigmaCoef.setComponent(1);
-            sigmaGF.ProjectCoefficient(sigmaCoef);
-            sigmaGF.SaveVTK(vtkFile, "sigma_xy", REF);
-            sigmaCoef.setComponent(2);
-            sigmaGF.ProjectCoefficient(sigmaCoef);
-            sigmaGF.SaveVTK(vtkFile, "sigma_yy", REF);
+            std::cout << "projected sigma" << std::endl;
+            sigmaGF.SaveVTK(vtkFile, "sigma", REF);
+            std::cout << "saved sigma" << std::endl;
             displacement.SaveVTK(vtkFile, "displacement", REF);
             
         }
