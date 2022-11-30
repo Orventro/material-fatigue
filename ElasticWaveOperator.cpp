@@ -1,11 +1,16 @@
+#include <iostream>
+
 #include"ElasticWaveOperator.hpp"
 
 /**
  * Class implementing right-hand side of the equation u_tt = M^{-1} [ f - K u ].
  * Using this class is required for standard MFEM time-stepping algorithms.
  */
-ElasticWaveOperator2D::ElasticWaveOperator2D(mfem::FiniteElementSpace &fspace, mfem::Coefficient &rhoCoef, mfem::Coefficient &lambdaCoef,
-                        mfem::Coefficient &muCoef):
+ElasticWaveOperator2D::ElasticWaveOperator2D(
+                        mfem::FiniteElementSpace  &fspace, 
+                        mfem::Coefficient         &rhoCoef, 
+                        mfem::Coefficient         &lambdaCoef,
+                        mfem::Coefficient         &muCoef):
         SecondOrderTimeDependentOperator(fspace.GetTrueVSize(), 0.0),
         fespace(fspace),
         M(&fespace),
@@ -114,7 +119,9 @@ void ElasticWaveOperator2D::SetTime(const double t) {
 }
 
 ElasticWaveOperator2D::~ElasticWaveOperator2D() {
+    // std::cout << "Deleting EWO" << std::endl;
     delete MMatInv;
     delete KMat;
-    delete f;
+    // delete f;
+    // std::cout << "Deleted EWO" << std::endl;
 };

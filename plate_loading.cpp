@@ -6,15 +6,16 @@
 #include <string>
 #include "ElasticWaveOperator.hpp"
 #include "SigmaCoefficient.hpp"
+#include "FatigueCoefficient.hpp"
 
 using namespace mfem;
 
 void displacementOnBoundary(const Vector& x, double time, Vector& d) {
     const double freq = 3e6;
-    const double amplitude = 4e-5;
+    const double amplitude = 4e-5; // 4 mm
     //d(0) = 0.0;
-    d(1) = amplitude * tanh(time * freq * 2. * M_PI);
-    // d(1) = amplitude * sin(time * freq * 2. * M_PI);
+    // d(1) = amplitude * tanh(time * freq * 2. * M_PI);
+    d(1) = amplitude * sin(time * freq * 2. * M_PI);
 }
 
 int main(int argc, char* argv[]) {
@@ -34,11 +35,9 @@ int main(int argc, char* argv[]) {
     timer.Start();
     const int ORDER = 4;
     double calculationTime = 0.0;
-    std::cout << "Loading mesh...\n";
     Mesh mesh(argv[1]);
     std::cout << "Mesh loaded.\n";
 
-    // mesh.attributes.Print();
     /*
      * Boundary attributes:
      *    top:      1
@@ -47,54 +46,56 @@ int main(int argc, char* argv[]) {
      *    right:    4
      *    circle:   5
      */
+    Array<int> boundaryAttribute(mesh.bdr_attributes.Size());
+    boundaryAttribute = 0;
+    boundaryAttribute[0] = 1;
+
     double dt = 3e-9 / 16.0; // 9e-9 for 2nd order // order = 2, Newmark scheme => k = 0.577, k_order = 2, dt < k * h_min / Cp / k_order = 1.9e-8
     const uint NumberOfTimeSteps = 1000000; // 2e-6 [s] takes the P-wave to move across the plate
 
+    // Defining material parameters
+    const double E0 = 116e9; // Young's modulus [Pa]
+    const double nu0 = 0.32; // Poisson's ratio
+    const double rho0 = 4370; // density [kg/m^3]
+    const double lambda0 = E0 * nu0 / ((1 + nu0) * (1 - 2 * nu0));
+    const double mu0 = E0 / (2 * (1 + nu0));
+
     // Define FE space
     H1_FECollection fe_collection(ORDER, mesh.Dimension(), BasisType::GaussLobatto);
-    FiniteElementSpace fespace(&mesh, &fe_collection, mesh.Dimension());
-    GridFunction displacement(&fespace);
+    FiniteElementSpace fespace1(&mesh, &fe_collection, 1);
+    FiniteElementSpace fespace2(&mesh, &fe_collection, 2);
+    FiniteElementSpace fespace3(&mesh, &fe_collection, 3);
+    GridFunction displacementGF(&fespace2);
+    GridFunction sigmaGF(&fespace3);
+    sigmaGF = 0;
+    GridFunction lambdaGF(&fespace1);
+    GridFunction muGF(&fespace1);
 
-    // Defining material parameters
     ConstantCoefficient rhoCoef(4500.0);
-    Vector lambda(2);
-    lambda(0) = 7.7e10;
-    lambda(1) = 7.7e8;
-    PWConstCoefficient lambdaCoef(lambda);
-    Vector mu(2);
-    mu(0) = 4.4e10;
-    mu(1) = 4.4e8;
-    PWConstCoefficient muCoef(mu);
 
-    std::cout << "Preparation took " << timer.RealTime() << " seconds.\nStarting forward simulation.\n";
+    SigmaCoefficient sigmaCoeff(displacementGF);
+    FatigueCoefficient fatigueCoeff(sigmaGF, fespace1);
+    LambdaCoefficient lambdaCoeff(fatigueCoeff);
+    MuCoefficient muCoeff(fatigueCoeff);
+    sigmaCoeff.setMaterial(&lambdaCoeff, &muCoeff);
 
-    // Defining operator for spatial discretization and ODE solver for time discretization
-    ElasticWaveOperator2D oper(fespace, rhoCoef, lambdaCoef, muCoef);
-    printf("Operator done!\n");
+    ElasticWaveOperator2D oper(fespace2, rhoCoef, lambdaCoeff, muCoeff);
     oper.SetTime(calculationTime);
+    std::cout << "Operator created.\n";
     mfem::CentralDifferenceSolver ode_solver;
     ode_solver.Init(oper);
 
-    // Initializing (to zeros) displacement u and velocity du
-    Vector u(fespace.GetVSize()), du(fespace.GetVSize());
+    Vector u(fespace2.GetVSize()), du(fespace2.GetVSize());
     u  = 0.0;
     du = 0.0;
-    // u.UseDevice(true);
-    // du.UseDevice(true);
 
-    FiniteElementSpace scalarFESpace(&mesh, &fe_collection, 1);
+    // std::cout << fespace3.GetVSize() << std::endl;
+    // return 0;
+
     VectorFunctionCoefficient displacementCoeff(2, displacementOnBoundary);
     displacementCoeff.SetTime(calculationTime);
 
-    
-    
-    Array<int> boundaryAttribute(mesh.bdr_attributes.Size());
-    boundaryAttribute = 0;
-    boundaryAttribute[0] = 1; // top boundary
-
-    SigmaCoefficient sigmaCoef(displacement, lambdaCoef, muCoef);
-    GridFunction sigmaGF(&fespace);
-
+    std::cout << "Preparation took " << timer.RealTime() << " seconds.\nStarting forward simulation.\n";
 
     std::filesystem::create_directory(argv[2]);
     const uint saveStep = 100;
@@ -104,12 +105,22 @@ int main(int argc, char* argv[]) {
         // Setting correct values on boundary
         ode_solver.Step(u, du, calculationTime, dt);
 
-        du *= 1-2e-4; // only for conevrging simualtions
+        // du *= 1-2e-4; // only for conevrging simualtions
 
         displacementCoeff.SetTime(calculationTime);
-        displacement.SetFromTrueDofs(u);
-        displacement.ProjectBdrCoefficient(displacementCoeff, boundaryAttribute);
-        displacement.GetTrueDofs(u);
+        displacementGF.SetFromTrueDofs(u);
+        displacementGF.ProjectBdrCoefficient(displacementCoeff, boundaryAttribute);
+        displacementGF.GetTrueDofs(u);
+
+        if ( !((i+1) % fatigueStep) ) {
+            sigmaGF.ProjectCoefficient(sigmaCoeff);
+
+            fatigueCoeff.Update();
+            
+            // fatigueGF.ProjectCoefficient(fatigueCoeff);
+            // std::cout << fatigueCoeff.GetCalls() << ' ' << fatigueGF.Size() << ' ' << fatigueCoeff.GetMaxNo() << std::endl;
+            // break;
+        }
 
         if ( !((i+1) % saveStep) ) {
             std::string filename = std::string(argv[2]) + "/plateMesh_" + std::to_string(i+1) + ".vtk";
@@ -117,17 +128,14 @@ int main(int argc, char* argv[]) {
 
             std::ofstream vtkFile(filename);
             mesh.PrintVTK(vtkFile, REF);
-            std::cout << "Mesh saved.\n";
-            sigmaCoef.setComponent(0);
-            sigmaGF.ProjectCoefficient(sigmaCoef);
-            std::cout << "projected sigma" << std::endl;
             sigmaGF.SaveVTK(vtkFile, "sigma", REF);
-            std::cout << "saved sigma" << std::endl;
-            displacement.SaveVTK(vtkFile, "displacement", REF);
-            
+            displacementGF.SaveVTK(vtkFile, "displacement", REF);
+            lambdaGF.ProjectCoefficient(lambdaCoeff);
+            lambdaGF.SaveVTK(vtkFile, "lambda", REF);
+            muGF.ProjectCoefficient(muCoeff);
+            muGF.SaveVTK(vtkFile, "mu", REF);
         }
-
-        std::cout << "\rFinished time step " << i << std::flush;
+        
     }
 
     timer.Stop();

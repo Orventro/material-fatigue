@@ -12,7 +12,9 @@ protected:
     mfem::SparseMatrix * MMatInv;
 
 public:
-    ElasticWaveOperator2D(mfem::FiniteElementSpace &fspace, mfem::Coefficient &rhoCoef, mfem::Coefficient &lambdaCoef,
+    ElasticWaveOperator2D(mfem::FiniteElementSpace      &fspace, 
+                          mfem::Coefficient             &rhoCoef, 
+                          mfem::Coefficient &lambdaCoef,
                           mfem::Coefficient &muCoef);
     
     void Mult(const mfem::Vector& u, const mfem::Vector &du, mfem::Vector &d2u) const override;
