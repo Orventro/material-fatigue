@@ -45,7 +45,7 @@ ElasticWaveOperator2D::ElasticWaveOperator2D(
     M.AddDomainIntegrator(new mfem::VectorMassIntegrator(rhoCoef, &i_rule));
     M.Assemble();
     M.Finalize();
-    
+
     mfem::SparseMatrix Mmat;
     M.FormSystemMatrix(listOfEssentialDOFs, Mmat);
     mfem::Vector diagonal(fespace.GetTrueVSize());
@@ -58,7 +58,7 @@ ElasticWaveOperator2D::ElasticWaveOperator2D(
         else
             diagonal(i) = 1.0 / diagonal(i); // FIXME: possible division by zero
     }
-    
+
     MMatInv = new mfem::SparseMatrix(diagonal);
     MMatInv->Finalize();
     diagonal.Destroy(); // freeing memory

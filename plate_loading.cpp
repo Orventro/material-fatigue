@@ -81,7 +81,6 @@ int main(int argc, char* argv[]) {
 
     ElasticWaveOperator2D oper(fespace2, rhoCoef, lambdaCoeff, muCoeff);
     oper.SetTime(calculationTime);
-    std::cout << "Operator created.\n";
     mfem::CentralDifferenceSolver ode_solver;
     ode_solver.Init(oper);
 
@@ -114,12 +113,9 @@ int main(int argc, char* argv[]) {
 
         if ( !((i+1) % fatigueStep) ) {
             sigmaGF.ProjectCoefficient(sigmaCoeff);
+            sigmaCoeff.hadEval();
 
             fatigueCoeff.Update();
-            
-            // fatigueGF.ProjectCoefficient(fatigueCoeff);
-            // std::cout << fatigueCoeff.GetCalls() << ' ' << fatigueGF.Size() << ' ' << fatigueCoeff.GetMaxNo() << std::endl;
-            // break;
         }
 
         if ( !((i+1) % saveStep) ) {
@@ -134,7 +130,9 @@ int main(int argc, char* argv[]) {
             lambdaGF.SaveVTK(vtkFile, "lambda", REF);
             muGF.ProjectCoefficient(muCoeff);
             muGF.SaveVTK(vtkFile, "mu", REF);
+            fatigueCoeff.getPsi().SaveVTK(vtkFile, "psi", REF);
         }
+        
         
     }
 

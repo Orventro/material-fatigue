@@ -28,23 +28,34 @@ public:
         for(int i = 0; i < psi.Size(); i++) {
             double deltaSigma = sigma(i*3+2) - sigma(i*3+1);
             double sigma_eq = std::sqrt((sigma(i*3+2)*deltaSigma)/2);
-            double sigmaFrac = (sigma_eq - sigma_u)/(sigma_B - sigma_u);
-            double B = 1e-3 * (std::pow(sigmaFrac, 1/beta)) / (2*(1-gamma));
-            
-            deltaN = std::min(deltaN, 1/2/B * (0.5/(1-gamma) - std::pow(psi(i), 1-gamma)/(1-gamma) + std::pow(psi(i), 2-2*gamma)/(2-2*gamma)));
+            if (sigma_eq > sigma_u) {
+                double sigmaFrac = (sigma_eq - sigma_u)/(sigma_B - sigma_u);
+                double B = 1e-3 * (std::pow(sigmaFrac, 1/beta)) / (2*(1-gamma));
+                
+                double newN = 0.5/B * (0.5/(1-gamma) - std::pow(psi(i), 1-gamma)/(1-gamma) + std::pow(psi(i), 2-2*gamma)/(2-2*gamma));
+                // printf(" gamma %f\n pow1 %f\n pow2 %f\n psi %f\n B %f\n powB %f\n sigmaFrac %f\n sEq %f\n sU %f\n sB %f\n N1 %f\n", 
+                //     gamma, std::pow(psi(i), 1-gamma), std::pow(psi(i), 2-2*gamma), psi(i), B, std::pow(sigmaFrac, 1/beta), sigmaFrac,
+                //     sigma_eq, sigma_u, sigma_B, 1/B);
+                deltaN = std::min(deltaN, newN);
+            }
         }
 
-        std::cout << "deltaN = " << deltaN << std::endl;
+        // std::cout << "deltaN = " << deltaN << std::endl;
 
         for(int i = 0; i < psi.Size(); i++) {
             double deltaSigma = sigma(i*3+2) - sigma(i*3+1);
             double sigma_eq = std::sqrt((sigma(i*3+2)*deltaSigma)/2);
-            double sigmaFrac = (sigma_eq - sigma_u)/(sigma_B - sigma_u);
-            double B = 1e-3 * (std::pow(sigmaFrac, 1/beta)) / (2*(1-gamma));
+            if (sigma_eq > sigma_u) {
+                double sigmaFrac = (sigma_eq - sigma_u)/(sigma_B - sigma_u);
+                double B = 1e-3 * (std::pow(sigmaFrac, 1/beta)) / (2*(1-gamma));
 
-            psi(i) = std::pow(1 - std::sqrt(p2(1-std::pow(psi(i), 1-gamma)) - 2*(1-gamma)*deltaN*B), 1/(1-gamma));
+                psi(i) = std::pow(1 - std::sqrt(p2(1-std::pow(psi(i), 1-gamma)) - 2*(1-gamma)*deltaN*B), 1/(1-gamma));
+                // printf("psi %f\n sqrt2 %f\n", psi(i), p2(1-std::pow(psi(i), 1-gamma)) - 2*(1-gamma)*deltaN*B);
+            }
         }
     }
+
+    mfem::GridFunction &getPsi() { return psi;}
 
     friend class LambdaCoefficient;
     friend class MuCoefficient;
@@ -57,7 +68,7 @@ private:
     FatigueCoefficient &fatigue;
 public:
 
-    LambdaCoefficient(FatigueCoefficient c) : fatigue(c) { }
+    LambdaCoefficient(FatigueCoefficient &c) : fatigue(c) { }
 
     virtual double Eval(mfem::ElementTransformation &T, const mfem::IntegrationPoint &ip)
     {   
@@ -74,7 +85,7 @@ private:
     FatigueCoefficient &fatigue;
 public:
 
-    MuCoefficient(FatigueCoefficient c) : fatigue(c) { }
+    MuCoefficient(FatigueCoefficient &c) : fatigue(c) { }
 
     virtual double Eval(mfem::ElementTransformation &T, const mfem::IntegrationPoint &ip)
     {   
