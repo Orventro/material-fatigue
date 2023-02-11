@@ -32,14 +32,14 @@ ElasticWaveOperator2D::ElasticWaveOperator2D(
     essentialBoundaryMarkers = 0;
     essentialBoundaryMarkers[2] = 1; // bottom
     fespace.GetEssentialTrueDofs(essentialBoundaryMarkers, subListOfEssDOFs, 1);
-    listOfEssentialDOFs.Append(subListOfEssDOFs);
+    // listOfEssentialDOFs.Append(subListOfEssDOFs);
+    // for(int i = 0; i < listOfEssentialDOFs.Size(); i++) printf("%d ", listOfEssentialDOFs[i]); printf("\n");
     essentialBoundaryMarkers = 0;
     essentialBoundaryMarkers[3] = 1; // right
     essentialBoundaryMarkers[1] = 1; // left
     fespace.GetEssentialTrueDofs(essentialBoundaryMarkers, subListOfEssDOFs, 0);
     listOfEssentialDOFs.Append(subListOfEssDOFs);
-
-    printf("Bounds done!\n");
+    // for(int i = 0; i < listOfEssentialDOFs.Size(); i++) printf("%d ", listOfEssentialDOFs[i]); printf("\n");
 
     // Compute inverse mass matrix MMatInv
     M.AddDomainIntegrator(new mfem::VectorMassIntegrator(rhoCoef, &i_rule));

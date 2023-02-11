@@ -28,8 +28,6 @@ void next(mat &u, int n, mat &r, mat &th, double h, double tau, vec &phi, vec &p
     flatten(u, ROW);
 }
 
-void row_solve(vec v)
-
 int main() {
     int L = 5;
     sp_mat m(L, L);

@@ -46,10 +46,13 @@ def material_eye(pt):
 def material_circle(pt):
 	x = np.real(pt) * 1e3
 	y = np.imag(pt) * 1e3
-	return ((x**2 + y**2) <= 4) + 1
+	return ((x**2 + y**2) <= 1) + 1
 
 def material_whole(pt):
-	return 1
+	return np.ones(len(pt), int)
+
+def material_uniq_els(pt):
+	return np.ones(len(pt), int)
 
 def assign_material(pts, polys, formula):
 	mid = np.mean(pts[np.array(polys)], axis=1) # middle of polygon
@@ -126,7 +129,8 @@ if __name__ == '__main__':
 	
 	polys = gen_polys(n, m)
 
-	material = assign_material(pts, polys, material_circle)
+	# material = assign_material(pts, polys, material_whole)
+	material = np.arange(len(polys), dtype=int)+1
 	
 	polys = np.array(polys)
 
