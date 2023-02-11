@@ -177,6 +177,7 @@ int main(int argc, char* argv[]) {
             // fatigueCoeff.getPsi().SaveVTK(vtkFile, "psi", REF);
         }
         
+        
     }
 
     // calculating damage

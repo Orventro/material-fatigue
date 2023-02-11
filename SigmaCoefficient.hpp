@@ -12,6 +12,7 @@ private:
     mfem::GridFunction &u;
     mfem::Coefficient &lambda, &mu;
     mfem::DenseMatrix eps, sigma;
+    bool firstEval = 1;
 
 public:
     SigmaCoefficient(mfem::GridFunction &_u, mfem::Coefficient &_lambda, mfem::Coefficient &_mu)
@@ -29,6 +30,8 @@ public:
         return (sigma(0,0) + sigma(1,1))/2 + 0.5*std::sqrt(p2(sigma(0,0) - sigma(1,1)) + 4*p2(sigma(0,1)));
     }
     
+    void hadEval() {firstEval = 0;}
+
     virtual void Read(std::istream &in) { }
     virtual ~SigmaCoefficient() { }
 };
