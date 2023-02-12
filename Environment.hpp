@@ -73,9 +73,12 @@ public:
         // load material
         sigmaMin = 0.;
         sigmaMax = 0.;
+        mu.SetSize(mesh.GetNE());
+        lambda.SetSize(mesh.GetNE());
         if (psiFilename.size() > 1) {
             std::ifstream psiFile(psiFilename);
             psi.Load(psiFile);
+            std::cout << "psi loaded\n";
             MFEM_ASSERT(psi.Size() == mesh.GetNE(), "Loaded psi from file '" + 
                             psiFile + "', it's size is not equal to mesh size");
             for(int i = 0; i < psi.Size(); i++) {
@@ -84,8 +87,6 @@ public:
                 mu(i) = E / (2 * (1 + nu0));
             }
         } else {
-            mu.SetSize(mesh.GetNE());
-            lambda.SetSize(mesh.GetNE());
             psi.SetSize(mesh.GetNE());
 
             mu = E0 / (2 * (1 + nu0));
