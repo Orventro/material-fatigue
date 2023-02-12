@@ -14,3 +14,10 @@ Readme.html
 Readme.pdf
 debug/*
 fatcalc_v1/*
+build/CMakeCache.txt
+build/cmake_install.cmake
+plateMesh_7_5000.vtk
+build/.cmake/*
+util/__pycache__/*
+build/plate_load
+build/plate_load_mpi

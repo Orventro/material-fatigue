@@ -27,19 +27,10 @@ ElasticWaveOperator2D::ElasticWaveOperator2D(
     mfem::Array<int> essentialBoundaryMarkers(fespace.GetMesh()->bdr_attributes.Max());
     mfem::Array<int> subListOfEssDOFs;
     essentialBoundaryMarkers = 0;
-    essentialBoundaryMarkers[0] = 1; // top
-    fespace.GetEssentialTrueDofs(essentialBoundaryMarkers, subListOfEssDOFs, 1);
-    essentialBoundaryMarkers = 0;
-    essentialBoundaryMarkers[2] = 1; // bottom
-    fespace.GetEssentialTrueDofs(essentialBoundaryMarkers, subListOfEssDOFs, 1);
-    // listOfEssentialDOFs.Append(subListOfEssDOFs);
-    // for(int i = 0; i < listOfEssentialDOFs.Size(); i++) printf("%d ", listOfEssentialDOFs[i]); printf("\n");
-    essentialBoundaryMarkers = 0;
     essentialBoundaryMarkers[3] = 1; // right
     essentialBoundaryMarkers[1] = 1; // left
     fespace.GetEssentialTrueDofs(essentialBoundaryMarkers, subListOfEssDOFs, 0);
     listOfEssentialDOFs.Append(subListOfEssDOFs);
-    // for(int i = 0; i < listOfEssentialDOFs.Size(); i++) printf("%d ", listOfEssentialDOFs[i]); printf("\n");
 
     // Compute inverse mass matrix MMatInv
     M.AddDomainIntegrator(new mfem::VectorMassIntegrator(rhoCoef, &i_rule));
@@ -51,7 +42,6 @@ ElasticWaveOperator2D::ElasticWaveOperator2D(
     mfem::Vector diagonal(fespace.GetTrueVSize());
     Mmat.GetDiag(diagonal);
     Mmat.~SparseMatrix();
-    // delete Mmat; // freeing memory, for some reason Destroy() method is protected
     for (int i = 0; i < diagonal.Size(); i++) {
         if (diagonal(i) < 1e-12)
             std::cout << "Zero encountered" << std::endl;
@@ -74,9 +64,6 @@ ElasticWaveOperator2D::ElasticWaveOperator2D(
 
     // Form right-hand side f
     f = new mfem::LinearForm(&fespace);
-    //f_coef.SetTime(0.0);
-    //IntegrationRule integrationRuleEdge = IntegrationRules(0, Quadrature1D::GaussLobatto).Get(Geometry::SEGMENT,2*order-1);
-    //f->AddBoundaryIntegrator(new VectorBoundaryFluxLFIntegrator(f_coef, 1e3/*, &integrationRuleEdge*/));
     f->Assemble();
 }
 
