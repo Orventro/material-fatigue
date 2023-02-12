@@ -19,7 +19,6 @@ public:
     
     void Mult(const mfem::Vector& u, const mfem::Vector &du, mfem::Vector &d2u) const override;
     void ImplicitSolve(const double beta, const double, const mfem::Vector& u,const mfem::Vector &du, mfem::Vector &d2u) override;
-    // void 
     void SetTime(const double t) override;
     ~ElasticWaveOperator2D() override;
 };

@@ -15,7 +15,6 @@ ElasticWaveOperator2D::ElasticWaveOperator2D(
         fespace(fspace),
         M(&fespace),
         K(&fespace),
-        //f_coef(rhs),
         f(nullptr),
         KMat(nullptr),
         MMatInv(nullptr) {
@@ -100,15 +99,10 @@ void ElasticWaveOperator2D::ImplicitSolve(const double beta, const double, const
      */
 void ElasticWaveOperator2D::SetTime(const double t) {
     SecondOrderTimeDependentOperator::SetTime(t);
-    //f_coef.SetTime(t);
-    //f->Assemble();
     *f = 0.0;
 }
 
 ElasticWaveOperator2D::~ElasticWaveOperator2D() {
-    // std::cout << "Deleting EWO" << std::endl;
     delete MMatInv;
     delete KMat;
-    // delete f;
-    // std::cout << "Deleted EWO" << std::endl;
 };

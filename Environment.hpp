@@ -110,8 +110,6 @@ public:
     void step(double dt) {
         solver.Step(u, du, t, dt);
 
-        // du *= 1-2e-4; // only for conevrging simulations
-
         displacementCoeff.SetTime(t);
         displacementGF.SetFromTrueDofs(u);
         displacementGF.ProjectBdrCoefficient(displacementCoeff, boundaryAttribute);
@@ -183,7 +181,6 @@ public:
         std::ofstream psiFile(filename);
         psiFile << psi.Size() << std::endl;
         psi.Print(psiFile, 1);
-        // psi *= 100;
         psiFile.close();
     }
 
