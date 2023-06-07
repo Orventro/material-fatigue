@@ -23,10 +23,11 @@ public:
         u.GetVectorGradient(T, eps);  // eps = grad(u)
         eps.Symmetrize();             // eps = (1/2)*(grad(u) + grad(u)^t)
         double l = lambda.Eval(T, ip);
-        double m = mu.Eval(T, ip);
+        double m = mu.Eval(T, ip); 
         sigma.Diag(l*eps.Trace(), eps.Size()); // sigma = lambda*trace(eps)*I
         sigma.Add(2*m, eps);          // sigma += 2*mu*eps
 
+        // S = (Sxx + Syy)/2 + 1/2 sqrt((Sxx-Syy)^2 + 4 Sxy^2)
         return (sigma(0,0) + sigma(1,1))/2 + 0.5*std::sqrt(p2(sigma(0,0) - sigma(1,1)) + 4*p2(sigma(0,1)));
     }
     
