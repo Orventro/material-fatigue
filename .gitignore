@@ -30,6 +30,5 @@ make_old.sh
 CMakeLists.txt
 build/Makefile
 build/mfile
-doc/*
 plate_loading_old_cuda.cpp
-*.pdf
+
